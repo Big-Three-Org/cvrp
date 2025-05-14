@@ -1,4 +1,10 @@
-# Explanation of fcvrp_runner.py
+# Authors
+
+- Giannis Tampakis t8220146
+- Thodoris Zarkalis t8220043
+- Glytsos Dionysios t8220029
+
+# Explanation of our logic
 
 This script is designed to solve the Capacitated Vehicle Routing Problem (CVRP) using a combination of heuristic and local search algorithms. Below is a detailed explanation of how the script works and the rationale behind each algorithm used.
 
@@ -45,7 +51,7 @@ The script reads a CVRP instance from a file, generates an initial solution usin
 
 ## Experiments and Results
 
-We conducted multiple experiments with different seeds and time limits to evaluate the performance of the algorithm. The best result within the given time limit of 150 seconds was achieved with seed 43, yielding a score of 588. Additionally, we extended the time limit to 30 minutes using seed 15 and managed to achieve an exceptional score of 551.
+We conducted multiple experiments with different seeds and time limits to evaluate the performance of the algorithm. The best result within the given time limit of 150 seconds was achieved with seed 15, yielding a score of 593. Additionally, we extended the time limit to 30 minutes using the same seed and managed to achieve an exceptional score of 553.
 
 ## Conclusion
 
