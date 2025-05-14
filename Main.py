@@ -20,7 +20,7 @@ def main(instance_file):
         print(
             f"Family {i}: {len(family.nodes)} members, {family.required_visits} required visits, demand: {family.demand}")
 
-    solution_file = solve_cvrp(instance_file, output_file="solution.txt", seed=4)
+    solution_file = solve_cvrp(instance_file, output_file="solution.txt", seed=42)
     # If a solution file is provided, validate it
     if solution_file:
         if not os.path.exists(solution_file):
