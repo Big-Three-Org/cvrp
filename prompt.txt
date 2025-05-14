@@ -1,0 +1,90 @@
+We have a problem to solve
+
+Problem description:
+’’’
+
+Description
+Family Capacitated Vehicle Routing Problem (F-CVRP)
+The F-CVRP is a variation of the classical capacity-constrained vehicle routing problem (CVRP). In this problem, we have a fleet of vehicles that start and return to a common depot and their goal is to serve customers that are organized into families. Each node belongs to exactly one family. Each family
+𝑙 ∈ 𝐿 contains a number of nodes (𝑛𝑙). From each family, exactly 𝑣𝑙 nodes must be selected for service. Each node has a specific demand 𝑑𝑙, and each vehicle 𝑘 ∈ 𝐾 has a maximum capacity 𝑄. The distance between two nodes i ∈ 𝑁 and 𝑗 ∈ 𝑁 is defined as 𝑐𝑖𝑗.
+Constraints
+• Each route of each vehicle starts and ends at the depot.
+• From each family 𝑙 ∈ 𝐿, exactly as many nodes as are required (𝑣𝑙) must be visited.
+• The total demand served by each vehicle must not exceed its capacity.
+Objective function
+• The goal is to minimize the total distance traveled by the vehicles.
+Example
+Figure 1: Example F-CVRP (Source: https://www.sciencedirect.com/science/article/pii/S0377221723008172)
+• Three families of customers (e.g. white, gray and black group).
+• A total of 11 customers, organized into groups.
+• Four available vehicles, each with a capacity of 10 units.
+• Need to visit 3 customers from family 1, 3 from family 2 and 1 from family 3.
+Instance
+• The problem along with its characteristics are in the file fcvrp_
+P-n101-k4_10_3_3.txt
+o 1st line: |Ν| (number of customers), L (number of families), V (number of required customers in the solution), Q (capacity), Κ (number of vehicles)
+o 2nd line: Which customers correspond to each family
+o 3rd line: How many customers from each family should participate in the solution
+o 4th line: The demand of each node of each family (customers of the same family have the same demand)
+o 5th line - end: Cost table with the 1st line being the depot
+• You can read the file and create the initial model with the method
+load
+_
+model of [Parser.py](http://parser.py/).
+• The best known solution to the problem costs 519.
+Instructions
+• You must submit a folder with your project compressed as a zip file.
+• Your code must run within five minutes on a PC with a relatively modern
+processor.
+• Your code must produce a txt file with your final solution, which should
+follow the format of the file solution
+_example.txt. This file should already be
+in the folder with your python project.
+• You can use SolutionValidator to check if your solution matches the
+specifications of the problem.
+• If your code uses random generators for solving, they must be
+initialized with one of the following seeds: 4, 8, 15, 16, 23, 42.
+Scoring
+• Initial solution: The production of a feasible solution through an advantageous algorithm
+is scored with 6.
+• Improved solution: The requirement is the implementation of a selection algorithm that will
+improve the initial solution. You can also use a combination of algorithmic
+logics that have been discussed in the course as well as the available
+python code.
+o The best final solution (feasible and improved compared to the initial solution) will
+be
+scored with 10.
+o The worst final solution (feasible and improved compared to the initial solution) will
+be
+scored with 8.
+o The scores will then be calculated linearly depending on the quality of the solution.
+
+we have this exercise
+
+i want you to explain to me what it means for family. so if a vehicle goes to one family it has to visit only that famly? and also does it have to visit all the members of the family?
+
+‘’’
+
+I want you to understand the problem we are trying to solve, and then figure out a plan to execute in order to create an algorithm in python that will solve it.
+
+In essense you will give very detailed instructions to cursor ai in order to implement the solution
+
+You will research all the following algorithms to figure out which ones are best fitting to solve our problem and also how they should be implemented to fit our solution:
+
+- Local Search
+- Promises for VRP
+- Tabu Search
+- Tabu Search for Quadratic Assignment Problem
+- Guided Local Search
+- Iterated Local Search
+- Adaptive Memory
+- Adaptive Memory Pool
+- Simulated Annealing
+- Simulated Annealing for Continuous Function Optimization
+- Simulated Annealing for Travelling Salesman Problem
+- Ant Colony Optimization
+- Ant Colony Optimization for Vehicle Routing Problem
+- Evolutionary Algorithms
+- Genetic Algorithm for Travelling Salesman Problem
+
+Maybe a good idea would be to start by making an initial solution using an algorithm and then apply more algorithms to improve the solution
