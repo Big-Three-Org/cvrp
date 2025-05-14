@@ -25,7 +25,7 @@ def generate_cw_solution(model, seed=None):
     loads = {i: model.nodes[i].demand for i in visits}
     savings = sorted(
         [(C[0][i]+C[0][j]-C[i][j],i,j) for i in visits for j in visits if i<j],
-        reverse=True
+        key=lambda x: x[0], reverse=True
     )
     for s,i,j in savings:
         ri = next((k for k,v in routes.items() if v[1]==i or v[-2]==i), None)
@@ -46,8 +46,8 @@ def generate_cw_solution(model, seed=None):
         flat=[n for rt in routes.values() for n in rt if n]
         new_r=[[] for _ in range(model.vehicles)]; new_l=[0]*model.vehicles
         for n in flat:
+            d=model.nodes[n].demand
             for v in range(model.vehicles):
-                d=model.nodes[n].demand
                 if new_l[v]+d<=Q:
                     new_r[v].append(n); new_l[v]+=d; break
         return [[0]+r+[0] for r in new_r if r]
@@ -63,6 +63,58 @@ def two_opt(route, cost_matrix):
             if c<best_cost: best, best_cost = cand, c
     return best
 
+def relocate(routes, model):
+    """
+    Relocate a customer between routes for cost improvement.
+    """
+    best_gain = 0
+    best_move = None
+    C = model.cost_matrix
+    # compute loads
+    loads = [sum(model.nodes[n].demand for n in r if n!=0) for r in routes]
+    for r1 in range(len(routes)):
+        for idx in range(1, len(routes[r1]) - 1):
+            cust = routes[r1][idx]
+            demand = model.nodes[cust].demand
+            for r2 in range(len(routes)):
+                if r2 == r1: continue
+                if loads[r2] + demand > model.capacity: continue
+                for pos in range(1, len(routes[r2])):
+                    # cost before
+                    before = (C[routes[r1][idx-1]][cust] + C[cust][routes[r1][idx+1]] +
+                              C[routes[r2][pos-1]][routes[r2][pos]])
+                    after = (C[routes[r1][idx-1]][routes[r1][idx+1]] +
+                             C[routes[r2][pos-1]][cust] + C[cust][routes[r2][pos]])
+                    gain = before - after
+                    if gain > best_gain:
+                        best_gain = gain
+                        best_move = (r1, idx, r2, pos, gain)
+    if best_move:
+        r1, idx, r2, pos, _ = best_move
+        cust = routes[r1].pop(idx)
+        routes[r2].insert(pos, cust)
+        return True
+    return False
+
+def local_search(solution,model):
+    """
+    Apply 2-opt and relocate until no improvement.
+    """
+    sol = [r[:] for r in solution]
+    improved = True
+    while improved:
+        improved = False
+        # 2-opt per route
+        for i in range(len(sol)):
+            new_rt = two_opt(sol[i], model.cost_matrix)
+            if route_cost(new_rt, model.cost_matrix) < route_cost(sol[i], model.cost_matrix):
+                sol[i] = new_rt
+                improved = True
+        # relocate between routes
+        if relocate(sol, model):
+            improved = True
+    return sol
+
 def perturb(solution, model):
     """
     Shake: remove a random segment from one route and insert into another,
@@ -71,80 +123,57 @@ def perturb(solution, model):
     max_attempts = 10
     for _ in range(max_attempts):
         sol = [r[:] for r in solution]
-        # choose two distinct routes
-        if len(sol) < 2:
-            return sol
+        if len(sol) < 2: return sol
         r1, r2 = random.sample(range(len(sol)), 2)
-        if len(sol[r1]) <= 4:
-            continue
-        # select random segment in r1
+        if len(sol[r1]) <= 4: continue
         i = random.randint(1, len(sol[r1]) - 3)
         j = random.randint(i + 1, len(sol[r1]) - 2)
         segment = sol[r1][i:j]
-        # remove segment
         del sol[r1][i:j]
-        # try insertion positions in r2
-        insertion_positions = list(range(1, len(sol[r2])))
-        random.shuffle(insertion_positions)
-        for pos in insertion_positions:
-            candidate = [r[:] for r in sol]
-            for idx, n in enumerate(segment):
-                candidate[r2].insert(pos + idx, n)
-            # check capacity for both routes
-            def load(route):
-                return sum(model.nodes[n].demand for n in route if n != 0)
-            if load(candidate[r1]) <= model.capacity and load(candidate[r2]) <= model.capacity:
-                return candidate
-        # if no valid insertion, retry
-    # fallback: return original
+        positions = list(range(1, len(sol[r2])))
+        random.shuffle(positions)
+        for pos in positions:
+            cand = [r[:] for r in sol]
+            for idx,n in enumerate(segment): cand[r2].insert(pos+idx, n)
+            def load(r): return sum(model.nodes[n].demand for n in r if n)
+            if load(cand[r1])<=model.capacity and load(cand[r2])<=model.capacity:
+                return cand
     return solution
-
-def local_search(solution,model):
-    """
-    Apply 2-opt on all routes until no improve.
-    """
-    improved=True; sol=[r[:] for r in solution]
-    while improved:
-        improved=False
-        for idx,rt in enumerate(sol):
-            new=two_opt(rt,model.cost_matrix)
-            if route_cost(new,model.cost_matrix)<route_cost(rt,model.cost_matrix):
-                sol[idx]=new; improved=True
-    return sol
 
 def iterated_local_search(model,output_file,seed=None,iter_max=50):
     if seed is not None: random.seed(seed)
-    best=generate_cw_solution(model,seed)
-    best=local_search(best,model)
-    best_cost=sum(route_cost(r,model.cost_matrix) for r in best)
-    curr, curr_cost = best, best_cost
+    best = generate_cw_solution(model,seed)
+    best = local_search(best,model)
+    best_cost = sum(route_cost(r,model.cost_matrix) for r in best)
+    curr = [r[:] for r in best]
     for _ in range(iter_max):
         cand = perturb(curr, model)
-        cand=local_search(cand,model)
-        c_cost=sum(route_cost(r,model.cost_matrix) for r in cand)
-        if c_cost<best_cost:
-            best, best_cost = cand, c_cost
-            curr, curr_cost = cand, c_cost
+        cand = local_search(cand,model)
+        c_cost = sum(route_cost(r,model.cost_matrix) for r in cand)
+        if c_cost < best_cost:
+            best, best_cost = [r[:] for r in cand], c_cost
+            curr = [r[:] for r in cand]
         else:
-            curr, curr_cost = cand, c_cost
-    # write
+            curr = [r[:] for r in cand]
     with open(output_file,'w') as f:
         for r in best: f.write(' '.join(map(str,r))+'\n')
     return best
 
 def solve_cvrp(instance_file,output_file,seed=None):
-    model=load_model(instance_file)
-    total=sum(f.demand*f.required_visits for f in model.families)
-    if total>model.vehicles*model.capacity: raise ValueError
-    routes=iterated_local_search(model,output_file,seed)
-    valid,report=validate_solution(model,routes)
+    model = load_model(instance_file)
+    total = sum(f.demand*f.required_visits for f in model.families)
+    if total > model.vehicles*model.capacity: raise ValueError
+    routes = iterated_local_search(model,output_file,seed)
+    valid, report = validate_solution(model, routes)
     if not valid: raise RuntimeError('Invalid:'+','.join(report['errors']))
     print(f"Valid solution with total cost: {report['total_cost']}")
     return output_file
 
 if __name__=='__main__':
-    p=argparse.ArgumentParser();
-    p.add_argument('instance_file');p.add_argument('-o','--output',default='solution.txt');p.add_argument('-s','--seed',type=int)
-    a=p.parse_args();
-    if not os.path.exists(a.instance_file): print('Instance not found');exit(1)
+    p=argparse.ArgumentParser()
+    p.add_argument('instance_file')
+    p.add_argument('-o','--output',default='solution.txt')
+    p.add_argument('-s','--seed',type=int)
+    a=p.parse_args()
+    if not os.path.exists(a.instance_file): print('Instance not found'); exit(1)
     solve_cvrp(a.instance_file,a.output,a.seed)

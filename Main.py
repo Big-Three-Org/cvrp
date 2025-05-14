@@ -1,7 +1,6 @@
 import os
 from Parser import load_model
 from SolutionValidator import validate_solution, parse_solution_file
-from cvrp import solution
 
 
 def main(instance_file):
@@ -20,7 +19,7 @@ def main(instance_file):
         print(
             f"Family {i}: {len(family.nodes)} members, {family.required_visits} required visits, demand: {family.demand}")
 
-    solution_file = solution(instance_file)
+    solution_file = "solution.txt"
     # If a solution file is provided, validate it
     if solution_file:
         if not os.path.exists(solution_file):
