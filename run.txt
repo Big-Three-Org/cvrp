@@ -1,0 +1,1 @@
+python3 cvrp.py fcvrp_P-n101-k4_10_3_3.txt --seed 15
