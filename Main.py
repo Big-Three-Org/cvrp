@@ -1,6 +1,7 @@
 import os
 from Parser import load_model
 from SolutionValidator import validate_solution, parse_solution_file
+from fcvrp_runner import solve_cvrp
 
 
 def main(instance_file):
@@ -19,7 +20,7 @@ def main(instance_file):
         print(
             f"Family {i}: {len(family.nodes)} members, {family.required_visits} required visits, demand: {family.demand}")
 
-    solution_file = "solution_example.txt"
+    solution_file = solve_cvrp(instance_file, output_file="solution.txt", seed=4)
     # If a solution file is provided, validate it
     if solution_file:
         if not os.path.exists(solution_file):
@@ -55,4 +56,4 @@ def main(instance_file):
 
 
 if __name__ == "__main__":
-    main("fcvrp_P-n101-k4_10_3_3.txt", "solution_example.txt")
+    main("fcvrp_P-n101-k4_10_3_3.txt")
